@@ -11,10 +11,11 @@ class Application(tk.Frame):
         self.cards = Cards()
         self.root = root
         self.pack()
-        self.build_canvas()
+        self.build_toolbar_menu()
+        self.build_card_canvas()
         self.build_card_treeview()
 
-    def build_canvas(self):
+    def build_toolbar_menu(self):
         self.toolbar_menu = tk.Menu(self)
         self.file_menu = tk.Menu(self.toolbar_menu)
         self.file_menu.add_command(label = "Open", command = self.open)
@@ -29,19 +30,68 @@ class Application(tk.Frame):
         self.card_image_label.grid(row = 1, column = 1)
         """
 
+    def build_card_canvas(self):
+        self.card_canvas = tk.Canvas(self)
+        self.card_canvas.grid(row = 0, column = 0)
+        
+        self.card_name_label = tk.Label(self.card_canvas)
+        self.card_name_label.grid(row = 0, column = 0)
+        self.card_name_label.config(text = "Name")
+        self.card_name_entry_var = tk.StringVar()
+        self.card_name_entry = tk.Entry(self.card_canvas)
+        self.card_name_entry.grid(row = 0, column = 1)
+        self.card_name_entry.config(textvariable = self.card_name_entry_var)
+
+        self.card_id_label = tk.Label(self.card_canvas)
+        self.card_id_label.grid(row = 1, column = 0)
+        self.card_id_label.config(text = "Id")
+        self.card_id_entry_var = tk.StringVar()
+        self.card_id_entry = tk.Entry(self.card_canvas)
+        self.card_id_entry.grid(row = 1, column = 1)
+        self.card_id_entry.config(textvariable = self.card_id_entry_var)
+
+        self.card_attribute_label = tk.Label(self.card_canvas)
+        self.card_attribute_label.grid(row = 2, column = 0)
+        self.card_attribute_label.config(text = "Attribute")
+        self.card_attribute_entry_var = tk.StringVar()
+        self.card_attribute_entry = tk.Entry(self.card_canvas)
+        self.card_attribute_entry.grid(row = 2, column = 1)
+        self.card_attribute_entry.config(textvariable = self.card_attribute_entry_var)
+
+        self.card_major_type_label = tk.Label(self.card_canvas)
+        self.card_major_type_label.grid(row = 3, column = 0)
+        self.card_major_type_label.config(text = "Major Type")
+        self.card_major_type_entry_var = tk.StringVar()
+        self.card_major_type_entry = tk.Entry(self.card_canvas)
+        self.card_major_type_entry.grid(row = 3, column = 1)
+        self.card_major_type_entry.config(textvariable = self.card_major_type_entry_var)
+
+        self.card_minor_type_label = tk.Label(self.card_canvas)
+        self.card_minor_type_label.grid(row = 4, column = 0)
+        self.card_minor_type_label.config(text = "Minor Type")
+        self.card_minor_type_entry_var = tk.StringVar()
+        self.card_minor_type_entry = tk.Entry(self.card_canvas)
+        self.card_minor_type_entry.grid(row = 4, column = 1)
+        self.card_minor_type_entry.config(textvariable = self.card_minor_type_entry_var)
+
     def build_card_treeview(self):
         self.card_treeview = tk.ttk.Treeview(self, columns = ("Name", "Id"))
-        self.card_treeview.grid(row = 0, column = 0)
+        self.card_treeview.grid(row = 0, column = 1)
         self.card_treeview.column("#0", minwidth = 0, width = 0, stretch = 0)
         self.card_treeview.bind("<Button-1>", self.card_treeview_onclick)
 
         for card in self.cards:
-            self.card_treeview.insert("", "end", values = (card.name, card.id))
+            self.card_treeview.insert("", "end", values = (card.name, card.id), iid = str(card.id))
 
     def card_treeview_onclick(self, event):
         row_itemid = self.card_treeview.identify_row(event.y)
-        row_item = self.card_treeview.item(row_itemid)
-        print(row_item["values"])
+        card = [card for card in self.cards if card.id == row_itemid][0]
+
+        self.card_name_entry_var.set(card.name)
+        self.card_id_entry_var.set(card.id)
+        self.card_attribute_entry_var.set(card.attribute)
+        self.card_major_type_entry_var.set(card.major_type)
+        self.card_minor_type_entry_var.set(card.minor_type)
 
     def open(self):
         pass
@@ -103,6 +153,7 @@ class Cards(list):
         name_file = TextFile("../decompile/bin\\CARD_Name_E.bin")
         description_file = TextFile("../decompile/bin\\CARD_Desc_E.bin")
         properties_file = PropertiesFile("../decompile/bin\\CARD_Prop.bin")
+
         for name, description, properties in zip(
                                                 name_file, 
                                                 description_file, 
@@ -121,6 +172,7 @@ class Card:
         self.id = self.decode_id()
         self.attribute = self.decode_attribute()
         self.major_type = self.decode_major_type()
+        self.minor_type = self.decode_minor_type()
 
     def decode_id(self):
         return str(int(
@@ -129,137 +181,218 @@ class Card:
                     base = 2))
 
     def decode_attribute(self):
-        attribute_code = int(
+        type_code = int(
                             self.properties_string[32 : 33] +
                             self.properties_string[45 : 48],
                             base = 2)
         
-        if attribute_code == 0x00:
+        if type_code == 0x00:
             return "None"
 
-        if attribute_code == 0x01:
+        if type_code == 0x01:
             return "Dark"
         
-        if attribute_code == 0x02:
+        if type_code == 0x02:
             return "Fire"
         
-        if attribute_code == 0x03:
+        if type_code == 0x03:
             return "Wind"
         
-        if attribute_code == 0x04:
+        if type_code == 0x04:
             return "Spell"
         
-        if attribute_code == 0x08:
+        if type_code == 0x08:
             return "Light"
         
-        if attribute_code == 0x09:
+        if type_code == 0x09:
             return "Water"
         
-        if attribute_code == 0x0A:
+        if type_code == 0x0A:
             return "Earth"
         
-        if attribute_code == 0x0B:
+        if type_code == 0x0B:
             return "Divine"
 
-        if attribute_code == 0x0C:
+        if type_code == 0x0C:
             return "Trap"
 
     def decode_major_type(self):
-        major_type_code = int(self.properties_string[33 : 39], base = 2)
+        type_code = int(self.properties_string[33 : 39], base = 2)
 
-        if major_type_code == 0x00:
+        if type_code == 0x00:
             return "Normal Monster"
 
-        if major_type_code == 0x01:
+        if type_code == 0x01:
             return "Effect Monster"
         
-        if major_type_code == 0x02:
+        if type_code == 0x02:
             return "Fusion Monster"
         
-        if major_type_code == 0x03:
+        if type_code == 0x03:
             return "Fusion Effect Monster"
 
-        if major_type_code == 0x04:
+        if type_code == 0x04:
             return "Ritual Monster"
 
-        if major_type_code == 0x05:
+        if type_code == 0x05:
             return "Ritual Effect Monster"
 
-        if major_type_code == 0x06:
+        if type_code == 0x06:
             return "Toon Monster"
 
-        if major_type_code == 0x07:
+        if type_code == 0x07:
             return "Spirit Monster"
 
-        if major_type_code == 0x08:
+        if type_code == 0x08:
             return "Union Effect Monster"
 
-        if major_type_code == 0x09:
+        if type_code == 0x09:
             return "Gemini Monster"
 
-        if major_type_code == 0x0A:
+        if type_code == 0x0A:
             return "Token"
 
-        if major_type_code == 0x0D:
+        if type_code == 0x0D:
             return "Spell Card"
 
-        if major_type_code == 0x0E:
+        if type_code == 0x0E:
             return "Trap Card"
         
-        if major_type_code == 0x0F:
+        if type_code == 0x0F:
             return "Tuner Monster"
 
-        if major_type_code == 0x10:
+        if type_code == 0x10:
             return "Tuner Effect Monster"
         
-        if major_type_code == 0x11:
+        if type_code == 0x11:
             return "Synchro Monster"
         
-        if major_type_code == 0x12:
+        if type_code == 0x12:
             return "Synchro Effect Monster"
         
-        if major_type_code == 0x13:
+        if type_code == 0x13:
             return "Synchro Tuner Monster"
         
-        if major_type_code == 0x16:
+        if type_code == 0x16:
             return "XYZ Monster"
 
-        if major_type_code == 0x17:
+        if type_code == 0x17:
             return "XYZ Effect Monster"
 
-        if major_type_code == 0x18:
+        if type_code == 0x18:
             return "Flip Effect Monster"
 
-        if major_type_code == 0x19:
+        if type_code == 0x19:
             return "Pendulum Monster"
         
-        if major_type_code == 0x1A:
+        if type_code == 0x1A:
             return "Pendulum Effect Monster"
 
-        if major_type_code == 0x1B:
+        if type_code == 0x1B:
             return "Effect Monster"
 
-        if major_type_code == 0x1C:
+        if type_code == 0x1C:
             return "Toon Monster"
 
-        if major_type_code == 0x1D:
+        if type_code == 0x1D:
             return "Spirit Monster"
         
-        if major_type_code == 0x1E:
+        if type_code == 0x1E:
             return "Tuner Effect Monster"
         
-        if major_type_code == 0x20:
+        if type_code == 0x20:
             return "Flip Tuner Effect Monster"
 
-        if major_type_code == 0x21:
+        if type_code == 0x21:
             return "Pendulum Tuner Effect Monster"
 
         
-        if major_type_code == 0x22:
+        if type_code == 0x22:
             return "XYZ Pendulum Effect Monster"
 
-        if major_type_code == 0x22:
+        if type_code == 0x22:
             return "Pendulum Flip Effect Monster"
+
+    def decode_minor_type(self):
+        type_code = int(self.properties_string[49 : 54], base = 2)
+
+        if type_code == 0x00:
+            return "Token"
+        
+        if type_code == 0x01:
+            return "Dragon"
+        
+        if type_code == 0x02:
+            return "Zombie"
+
+        if type_code == 0x03:
+            return "Fiend"
+        
+        if type_code == 0x04:
+            return "Pyro"
+
+        if type_code == 0x05:
+            return "Sea Serpent"
+
+        if type_code == 0x06:
+            return "Rock"
+
+        if type_code == 0x07:
+            return "Machine"
+
+        if type_code == 0x08:
+            return "Fish"
+
+        if type_code == 0x09:
+            return "Dinosaur"
+
+        if type_code == 0x0A:
+            return "Insect"
+
+        if type_code == 0x0B:
+            return "Beast"
+
+        if type_code == 0x0C:
+            return "Beast-Warrior"
+
+        if type_code == 0x0D:
+            return "Plant"
+
+        if type_code == 0x0E:
+            return "Aqua"
+
+        if type_code == 0x0F:
+            return "Warrior"
+
+        if type_code == 0x10:
+            return "Winged Beast"
+
+        if type_code == 0x11:
+            return "Fairy"
+
+        if type_code == 0x12:
+            return "Spellcaster"
+
+        if type_code == 0x13:
+            return "Thunder"
+
+        if type_code == 0x14:
+            return "Reptile"
+
+        if type_code == 0x15:
+            return "Psychic"
+
+        if type_code == 0x16:
+            return "Wrym"
+
+        if type_code == 0x17:
+            return "Divine-Beast"
+
+        if type_code == 0x19:
+            return "Spell"
+
+        if type_code == 0x1A:
+            return "Trap"
 
     def summarise(self):
         print(f"Name:\t\t{self.name}")
