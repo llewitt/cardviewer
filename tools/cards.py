@@ -187,7 +187,8 @@ class Cards:
         property_splits.add_property_split(16, 17, "Defence Round")
         property_splits.add_property_split(17, 24, "Attack")
         property_splits.add_property_split(24, 31, "Defence")
-        property_splits.add_property_split(31, 33, "Unknown")
+        property_splits.add_property_split(31, 32, "Unknown")
+        property_splits.add_property_split(32, 33, "Attribute [0]")
         property_splits.add_property_split(33, 39, "Major Type")
         
         """
@@ -200,7 +201,7 @@ class Cards:
         property_splits.add_property_split(39, 40, "None")
         property_splits.add_property_split(40, 41, "'E/Q-P/C'")
         property_splits.add_property_split(41, 45, "Level")
-        property_splits.add_property_split(45, 48, "Attribute Partial")
+        property_splits.add_property_split(45, 48, "Attribute [1]")
         property_splits.add_property_split(48, 49, "Unknown")
         property_splits.add_property_split(49, 54, "'Minor Type'")
         property_splits.add_property_split(54, 56, "F/C/R")
