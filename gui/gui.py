@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from tkinter import *
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageDraw, ImageFont
 from os import path
+from pdb import set_trace
 
 class Gui:
     def __init__(self):
@@ -39,7 +40,7 @@ class TextFile(File):
                 if len(buf) == 0:
                     raise StopIteration
                 
-                if buf[0] == 0:
+                if (buf[0] == 0) and (buf[1] == 0):
                     if len(string) == 0:
                         continue
                 
@@ -47,11 +48,7 @@ class TextFile(File):
                         self.cursor = handle.tell()
                         return string
 
-                try:
-                    string += buf[0].to_bytes(1, "big").decode("utf-8")
-
-                except UnicodeDecodeError:
-                    string += f"({hex(buf[0])})"
+                string += buf.decode("utf-16")
 
 class PropertiesFile(File):
     def __iter__(self):
@@ -222,6 +219,11 @@ class Renderer:
 
         self.art_dir_path = "cardcropHD400.jpg.zib"
 
+        self.name_font_path = "font\\MatrixRegularSmallCaps.otf"
+        self.name_font_size = 36
+
+        self.text_fill = (0, 0, 0)
+
     def render_card(self, card):
         """
         Load the frame
@@ -247,12 +249,38 @@ class Renderer:
 
         art = Image.open(art_path)
 
-
         """
         Paste everything into the canvas
         """
         canvas.paste(art, (49, 107))
         canvas.paste(frame, (0, 0), frame)
+
+        """
+        Add text
+        """
+        name_font = ImageFont.truetype(
+                    path.join(self.src_dir_path, self.name_font_path),
+                    size = self.name_font_size)
+
+        draw = ImageDraw.Draw(canvas)
+        draw.text(
+                (36, 57), 
+                card.name, 
+                font = name_font, 
+                fill = (0, 255, 0),
+                anchor = "ls")
+
+        draw.rectangle(
+                draw.textbbox(
+                    (36, 57), 
+                    card.name, 
+                    font = name_font,
+                    anchor = "ls"),
+                outline = (255, 0, 0))
+
+        """
+        Save the finished card
+        """
         canvas.save(
                     path.join(self.dest_dir_path, card.name + ".png"),
                     "PNG")
@@ -303,8 +331,7 @@ for name, description, properties in zip(
                                         name_file, 
                                         description_file, 
                                         properties_file):
-
-    card = Card(name, description, properties)
-    renderer.render_card(card)
-    break
+    if (name == "Gaia the Dragon Champion") or (name == "Insect Monster Token"):
+        card = Card(name, description, properties)
+        renderer.render_card(card)
 
