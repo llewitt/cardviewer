@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 
 import tkinter as tk
+from tkinter.ttk import Treeview
 from PIL import ImageTk, Image, ImageDraw, ImageFont
 from os import path
-from pdb import set_trace
 
 class Application(tk.Frame):
     def __init__(self, root= None):
         super().__init__(root)
+        self.cards = Cards()
         self.root = root
         self.pack()
         self.build_canvas()
+        self.build_card_treeview()
 
     def build_canvas(self):
         self.toolbar_menu = tk.Menu(self)
@@ -26,6 +28,20 @@ class Application(tk.Frame):
         self.card_image_label = tk.Label(self, image = self.card_image)
         self.card_image_label.grid(row = 1, column = 1)
         """
+
+    def build_card_treeview(self):
+        self.card_treeview = tk.ttk.Treeview(self, columns = ("Name", "Id"))
+        self.card_treeview.grid(row = 0, column = 0)
+        self.card_treeview.column("#0", minwidth = 0, width = 0, stretch = 0)
+        self.card_treeview.bind("<Button-1>", self.card_treeview_onclick)
+
+        for card in self.cards:
+            self.card_treeview.insert("", "end", values = (card.name, card.id))
+
+    def card_treeview_onclick(self, event):
+        row_itemid = self.card_treeview.identify_row(event.y)
+        row_item = self.card_treeview.item(row_itemid)
+        print(row_item["values"])
 
     def open(self):
         pass
@@ -83,6 +99,16 @@ class PropertiesFile(File):
 class Cards(list):
     def __init__(self):
         super().__init__(self)
+        self.renderer = Renderer()
+        name_file = TextFile("../decompile/bin\\CARD_Name_E.bin")
+        description_file = TextFile("../decompile/bin\\CARD_Desc_E.bin")
+        properties_file = PropertiesFile("../decompile/bin\\CARD_Prop.bin")
+        for name, description, properties in zip(
+                                                name_file, 
+                                                description_file, 
+                                                properties_file):
+
+            self.append(Card(name, description, properties))
 
 class Card:
     def __init__(self, name, description, properties):
@@ -420,21 +446,6 @@ def main():
     application = Application(root = root)
     application.mainloop()
     
-def load_cards():
-    name_file = TextFile("../decompile/bin\\CARD_Name_E.bin")
-    description_file = TextFile("../decompile/bin\\CARD_Desc_E.bin")
-    properties_file = PropertiesFile("../decompile/bin\\CARD_Prop.bin")
-    renderer = Renderer()
-
-    for name, description, properties in zip(
-                                            name_file, 
-                                            description_file, 
-                                            properties_file):
-
-        if name in ["Gaia the Dragon Champion", "Insect Monster Token"]:
-            card = Card(name, description, properties)
-            renderer.render_card(card)
-
 if __name__ == "__main__":
     exit(main())
 
