@@ -81,6 +81,7 @@ class Card:
                 64)
 
         self.id = self.decode_id()
+        self.attribute = self.decode_attribute()
         self.major_type = self.decode_major_type()
 
     def decode_id(self):
@@ -88,6 +89,42 @@ class Card:
                     self.properties_string[10 : 16] +
                     self.properties_string[0 : 8],
                     base = 2))
+
+    def decode_attribute(self):
+        attribute_code = int(
+                            self.properties_string[32 : 33] +
+                            self.properties_string[45 : 48],
+                            base = 2)
+        
+        if attribute_code == 0x00:
+            return "None"
+
+        if attribute_code == 0x01:
+            return "Dark"
+        
+        if attribute_code == 0x02:
+            return "Fire"
+        
+        if attribute_code == 0x03:
+            return "Wind"
+        
+        if attribute_code == 0x04:
+            return "Spell"
+        
+        if attribute_code == 0x08:
+            return "Light"
+        
+        if attribute_code == 0x09:
+            return "Water"
+        
+        if attribute_code == 0x0A:
+            return "Earth"
+        
+        if attribute_code == 0x0B:
+            return "Divine"
+
+        if attribute_code == 0x0C:
+            return "Trap"
 
     def decode_major_type(self):
         major_type_code = int(self.properties_string[33 : 39], base = 2)
@@ -187,8 +224,9 @@ class Card:
             return "Pendulum Flip Effect Monster"
 
     def summarise(self):
-        print(f"Name: {self.name}")
-        print(f"Major Type: {self.major_type}")
+        print(f"Name:\t\t{self.name}")
+        print(f"Attribute:\t{self.attribute}")
+        print(f"Major Type:\t{self.major_type}")
 
     def pad_binary_string(self, string, size):
         if len(string) == size:
@@ -200,6 +238,10 @@ class Renderer:
     def __init__(self):
         self.src_dir_path = "../decompile"
         self.dest_dir_path = "rendered"
+
+        self.card_width = 400
+        self.card_height = 580
+        self.card_size = (self.card_width, self.card_height)
         
         self.frame_ritual_path = "duel\\frame\\card_gisiki.png"
         self.frame_effect_path = "duel\\frame\\card_kouka.png"
@@ -217,6 +259,18 @@ class Renderer:
         self.frame_xyz_path = "duel\\frame\\card_xyz.png"
         self.frame_fusion_path = "duel\\frame\\card_yugo.png"
 
+        self.extras_path = "pdui\\STEAM_icons.png"
+        self.attribute_icon_dark_coordinates = (1299, 1, 1340, 42)
+        self.attribute_icon_fire_coordinates = (1341, 1, 1382, 42)
+        self.attribute_icon_light_coordinates = (1383, 1, 1424, 42)
+        self.attribute_icon_trap_coordinates = (1425, 1, 1466, 42)
+        self.attribute_icon_wind_coordinates = (1467, 1, 1508, 42)
+        self.attribute_icon_earth_coordinates = (1299, 43, 1340, 84)
+        self.attribute_icon_divine_coordinates = (13443, 43, 1382, 84)
+        self.attribute_icon_spell_coordinates = (1383, 43, 1424, 84)
+        self.attribute_icon_water_coordinates = (1425, 43, 1466, 84)
+        self.attribute_icon_coordinate = (329, 27, 370, 68)
+
         self.art_dir_path = "cardcropHD400.jpg.zib"
 
         self.name_font_path = "font\\MatrixRegularSmallCaps.otf"
@@ -225,6 +279,11 @@ class Renderer:
         self.text_fill = (0, 0, 0)
 
     def render_card(self, card):
+        """
+        Create the canvas which we'll paste things into
+        """
+        canvas = Image.new("RGB", self.card_size)
+
         """
         Load the frame
         """
@@ -235,9 +294,9 @@ class Renderer:
         frame = Image.open(frame_path)
 
         """
-        Create the canvas which we'll paste things into
+        Load the attribute icon
         """
-        canvas = Image.new("RGB", frame.size)
+        attribute_icon = self.load_attribute_icon(card)
 
         """
         Load the card artwork
@@ -254,6 +313,12 @@ class Renderer:
         """
         canvas.paste(art, (49, 107))
         canvas.paste(frame, (0, 0), frame)
+        
+        if attribute_icon != None:
+            canvas.paste(
+                    attribute_icon, 
+                    self.attribute_icon_coordinate, 
+                    attribute_icon)
 
         """
         Add text
@@ -270,6 +335,9 @@ class Renderer:
                 fill = (0, 255, 0),
                 anchor = "ls")
 
+        """
+        For testing
+        """
         draw.rectangle(
                 draw.textbbox(
                     (36, 57), 
@@ -322,6 +390,48 @@ class Renderer:
         if "Fusion" in major_type:
             return self.frame_fusion_path
 
+    def load_attribute_icon(self, card):
+        extras_path = path.join(self.src_dir_path, self.extras_path)
+
+        if "None" in card.attribute:
+            return None
+
+        if "Dark" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_dark_coordinates)
+        
+        if "Fire" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_fire_coordinates)
+        
+        if "Wind" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_wind_coordinates)
+        
+        if "Spell" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_spell_coordinates)
+        
+        if "Light" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_light_coordinates)
+        
+        if "Water" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_water_coordinates)
+        
+        if "Earth" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_earth_coordinates)
+        
+        if "Divine" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_divine_coordinates)
+
+        if "Trap" in card.attribute:
+            with Image.open(extras_path) as image:
+                return image.crop(self.attribute_icon_trap_coordinates)
+
 name_file = TextFile("../decompile/bin\\CARD_Name_E.bin")
 description_file = TextFile("../decompile/bin\\CARD_Desc_E.bin")
 properties_file = PropertiesFile("../decompile/bin\\CARD_Prop.bin")
@@ -331,7 +441,8 @@ for name, description, properties in zip(
                                         name_file, 
                                         description_file, 
                                         properties_file):
-    if (name == "Gaia the Dragon Champion") or (name == "Insect Monster Token"):
+
+    if name in ["Gaia the Dragon Champion", "Insect Monster Token"]:
         card = Card(name, description, properties)
         renderer.render_card(card)
 
