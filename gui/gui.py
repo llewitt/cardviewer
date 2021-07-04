@@ -279,38 +279,18 @@ class Renderer:
         self.text_fill = (0, 0, 0)
 
     def render_card(self, card):
-        """
-        Create the canvas which we'll paste things into
-        """
         canvas = Image.new("RGB", self.card_size)
-
-        """
-        Load the frame
-        """
-        frame_path = path.join(
+        frame = Image.open(path.join(
                             self.src_dir_path,
-                            self.choose_frame_path(card.major_type))
+                            self.choose_frame_path(card.major_type)))
 
-        frame = Image.open(frame_path)
-
-        """
-        Load the attribute icon
-        """
         attribute_icon = self.load_attribute_icon(card)
-
-        """
-        Load the card artwork
-        """
         art_path = path.join(
                             self.src_dir_path, 
                             self.art_dir_path, 
                             card.id + ".jpg")
 
         art = Image.open(art_path)
-
-        """
-        Paste everything into the canvas
-        """
         canvas.paste(art, (49, 107))
         canvas.paste(frame, (0, 0), frame)
         
@@ -320,9 +300,6 @@ class Renderer:
                     self.attribute_icon_coordinate, 
                     attribute_icon)
 
-        """
-        Add text
-        """
         name_font = ImageFont.truetype(
                     path.join(self.src_dir_path, self.name_font_path),
                     size = self.name_font_size)
@@ -335,9 +312,6 @@ class Renderer:
                 fill = (0, 255, 0),
                 anchor = "ls")
 
-        """
-        For testing
-        """
         draw.rectangle(
                 draw.textbbox(
                     (36, 57), 
@@ -346,9 +320,6 @@ class Renderer:
                     anchor = "ls"),
                 outline = (255, 0, 0))
 
-        """
-        Save the finished card
-        """
         canvas.save(
                     path.join(self.dest_dir_path, card.name + ".png"),
                     "PNG")
