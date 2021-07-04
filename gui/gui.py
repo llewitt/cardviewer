@@ -1,22 +1,34 @@
 #!/usr/bin/env python3
 
-from tkinter import *
+import tkinter as tk
 from PIL import ImageTk, Image, ImageDraw, ImageFont
 from os import path
 from pdb import set_trace
 
-class Gui:
-    def __init__(self):
-        root = Tk()
-        app = Frame(root)
-        root.wm_title("test")
-        root.grid()
+class Application(tk.Frame):
+    def __init__(self, root= None):
+        super().__init__(root)
+        self.root = root
+        self.pack()
+        self.build_canvas()
 
-        image = ImageTk.PhotoImage(Image.open("10000.jpg"))
-        widget = Label(root, image = image)
-        widget.grid()
+    def build_canvas(self):
+        self.toolbar_menu = tk.Menu(self)
+        self.file_menu = tk.Menu(self.toolbar_menu)
+        self.file_menu.add_command(label = "Open", command = self.open)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label = "Exit", command = self.quit)
+        self.toolbar_menu.add_cascade(label = "File", menu = self.file_menu)
+        self.root.config(menu = self.toolbar_menu)
+        
+        """
+        self.card_image = ImageTk.PhotoImage(Image.open("reference.png"))
+        self.card_image_label = tk.Label(self, image = self.card_image)
+        self.card_image_label.grid(row = 1, column = 1)
+        """
 
-        root.mainloop()
+    def open(self):
+        pass
 
 class File:
     def __init__(self, path):
@@ -403,17 +415,26 @@ class Renderer:
             with Image.open(extras_path) as image:
                 return image.crop(self.attribute_icon_trap_coordinates)
 
-name_file = TextFile("../decompile/bin\\CARD_Name_E.bin")
-description_file = TextFile("../decompile/bin\\CARD_Desc_E.bin")
-properties_file = PropertiesFile("../decompile/bin\\CARD_Prop.bin")
-renderer = Renderer()
+def main():
+    root = tk.Tk()
+    application = Application(root = root)
+    application.mainloop()
+    
+def load_cards():
+    name_file = TextFile("../decompile/bin\\CARD_Name_E.bin")
+    description_file = TextFile("../decompile/bin\\CARD_Desc_E.bin")
+    properties_file = PropertiesFile("../decompile/bin\\CARD_Prop.bin")
+    renderer = Renderer()
 
-for name, description, properties in zip(
-                                        name_file, 
-                                        description_file, 
-                                        properties_file):
+    for name, description, properties in zip(
+                                            name_file, 
+                                            description_file, 
+                                            properties_file):
 
-    if name in ["Gaia the Dragon Champion", "Insect Monster Token"]:
-        card = Card(name, description, properties)
-        renderer.render_card(card)
+        if name in ["Gaia the Dragon Champion", "Insect Monster Token"]:
+            card = Card(name, description, properties)
+            renderer.render_card(card)
+
+if __name__ == "__main__":
+    exit(main())
 
