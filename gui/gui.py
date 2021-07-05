@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import tkinter as tk
+from tkinter import filedialog
 from tkinter.ttk import Treeview
 from PIL import ImageTk, Image, ImageDraw, ImageFont
 from os import path
@@ -8,8 +9,8 @@ from os import path
 class Application(tk.Frame):
     def __init__(self, root= None):
         super().__init__(root)
-        self.cards = Cards()
         self.root = root
+        self.root.title("Card Viewer")
         self.pack()
         self.build_toolbar_menu()
         self.build_card_canvas()
@@ -18,7 +19,7 @@ class Application(tk.Frame):
     def build_toolbar_menu(self):
         self.toolbar_menu = tk.Menu(self)
         self.file_menu = tk.Menu(self.toolbar_menu)
-        self.file_menu.add_command(label = "Open", command = self.open)
+        self.file_menu.add_command(label = "Open", command = self.show_open_filedialog)
         self.file_menu.add_separator()
         self.file_menu.add_command(label = "Exit", command = self.quit)
         self.toolbar_menu.add_cascade(label = "File", menu = self.file_menu)
@@ -74,27 +75,62 @@ class Application(tk.Frame):
         self.card_minor_type_entry.grid(row = 4, column = 1)
         self.card_minor_type_entry.config(textvariable = self.card_minor_type_entry_var)
 
+        self.card_level_label = tk.Label(self.card_canvas)
+        self.card_level_label.grid(row = 5, column = 0)
+        self.card_level_label.config(text = "Level")
+        self.card_level_entry_var = tk.StringVar()
+        self.card_level_entry = tk.Entry(self.card_canvas)
+        self.card_level_entry.grid(row = 5, column = 1)
+        self.card_level_entry.config(textvariable = self.card_level_entry_var)
+
     def build_card_treeview(self):
         self.card_treeview = tk.ttk.Treeview(self, columns = ("Name", "Id"))
         self.card_treeview.grid(row = 0, column = 1)
         self.card_treeview.column("#0", minwidth = 0, width = 0, stretch = 0)
         self.card_treeview.bind("<Button-1>", self.card_treeview_onclick)
-
-        for card in self.cards:
-            self.card_treeview.insert("", "end", values = (card.name, card.id), iid = str(card.id))
+        self.card_treeview.bind("<KeyPress>", self.card_treeview_onkeypress)
 
     def card_treeview_onclick(self, event):
         row_itemid = self.card_treeview.identify_row(event.y)
         card = [card for card in self.cards if card.id == row_itemid][0]
+        self.card_canvas_update(card)
 
+    def card_treeview_onkeypress(self, event):
+        if event.keysym == "Up":
+            row_itemid = self.card_treeview.prev(self.card_treeview.focus())
+
+        elif event.keysym == "Down":
+            row_itemid = self.card_treeview.next(self.card_treeview.focus())
+
+        else:
+            return
+
+        try:
+            card = [card for card in self.cards if card.id == row_itemid][0]
+            self.card_canvas_update(card)
+
+        except IndexError:
+            return
+
+    def show_open_filedialog(self):
+        src_dir_path = filedialog.askdirectory()
+        self.open(src_dir_path)
+
+    def card_canvas_update(self, card):
         self.card_name_entry_var.set(card.name)
         self.card_id_entry_var.set(card.id)
         self.card_attribute_entry_var.set(card.attribute)
         self.card_major_type_entry_var.set(card.major_type)
         self.card_minor_type_entry_var.set(card.minor_type)
+        self.card_level_entry_var.set(card.level)
 
-    def open(self):
-        pass
+    def open(self, src_dir_path):
+        self.cards = Cards(src_dir_path = src_dir_path)
+
+        for card in self.cards:
+            self.card_treeview.insert("", "end", values = (card.name, card.id), iid = str(card.id))
+
+        self.card_canvas_update(self.cards[0])
 
 class File:
     def __init__(self, path):
@@ -147,12 +183,12 @@ class PropertiesFile(File):
                 raise StopIteration
 
 class Cards(list):
-    def __init__(self):
+    def __init__(self, src_dir_path = "../decompile"):
         super().__init__(self)
         self.renderer = Renderer()
-        name_file = TextFile("../decompile/bin\\CARD_Name_E.bin")
-        description_file = TextFile("../decompile/bin\\CARD_Desc_E.bin")
-        properties_file = PropertiesFile("../decompile/bin\\CARD_Prop.bin")
+        name_file = TextFile(path.join(src_dir_path, "bin\\CARD_Name_E.bin"))
+        description_file = TextFile(path.join(src_dir_path, "bin\\CARD_Desc_E.bin"))
+        properties_file = PropertiesFile(path.join(src_dir_path, "bin\\CARD_Prop.bin"))
 
         for name, description, properties in zip(
                                                 name_file, 
@@ -173,6 +209,7 @@ class Card:
         self.attribute = self.decode_attribute()
         self.major_type = self.decode_major_type()
         self.minor_type = self.decode_minor_type()
+        self.level = self.decode_level()
 
     def decode_id(self):
         return str(int(
@@ -182,9 +219,9 @@ class Card:
 
     def decode_attribute(self):
         type_code = int(
-                            self.properties_string[32 : 33] +
-                            self.properties_string[45 : 48],
-                            base = 2)
+                    self.properties_string[32 : 33] +
+                    self.properties_string[45 : 48],
+                    base = 2)
         
         if type_code == 0x00:
             return "None"
@@ -389,10 +426,52 @@ class Card:
             return "Divine-Beast"
 
         if type_code == 0x19:
-            return "Spell"
+            return self.decode_spell_minor_type()
 
         if type_code == 0x1A:
-            return "Trap"
+            return self.decode_trap_minor_type()
+
+    def decode_spell_minor_type(self):
+        type_code = int(
+                self.properties_string[40 : 41] +
+                self.properties_string[54 : 56], 
+                base = 2)
+
+        if type_code == 0x00:
+            return "Normal Spell"
+
+        if type_code == 0x01:
+            return "Field Spell"
+
+        if type_code == 0x02:
+            return "Continous Spell"
+
+        if type_code == 0x03:
+            return "Ritual Spell"
+
+        if type_code == 0x05:
+            return "Equip Spell"
+
+        if type_code == 0x06:
+            return "Quick-Play Spell"
+
+    def decode_trap_minor_type(self):
+        type_code = int(
+                self.properties_string[40 : 41] +
+                self.properties_string[54 : 56], 
+                base = 2)
+
+        if type_code == 0x00:
+            return "Normal Trap"
+
+        if type_code == 0x02:
+            return "Continous Spell"
+
+        if type_code == 0x06:
+            return "Counter Trap"
+
+    def decode_level(self):
+        return int(self.properties_string[41 : 45], base = 2)
 
     def summarise(self):
         print(f"Name:\t\t{self.name}")
