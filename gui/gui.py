@@ -5,6 +5,7 @@ from tkinter import filedialog
 from tkinter.ttk import Treeview
 from PIL import ImageTk, Image, ImageDraw, ImageFont
 from os import path
+from pdb import set_trace
 
 class Application(tk.Frame):
     def __init__(self, root = None):
@@ -169,16 +170,18 @@ class Cards(list):
                                                 description_file, 
                                                 properties_file):
 
-            self.append(Card(name, description, properties))
+            self.append(Card(name, description, properties, src_dir_path, self.renderer))
 
 class Card(dict):
-    def __init__(self, name, description, properties):
+    def __init__(self, name, description, properties, src_dir_path, renderer):
         super().__init__()
         self.name = name
         self.description = description
         self.properties_string = self.pad_binary_string(
                 bin(int.from_bytes(properties, "big")).lstrip("0b"),
                 64)
+
+        self.renderer = renderer
 
         self.id = self.decode_id()
         self.attribute = self.decode_attribute()
@@ -187,10 +190,11 @@ class Card(dict):
         self.level = self.decode_level()
 
         """
-        This is hacky work around allowing up to access the class attributes
+        This is a hacky work around allowing us to access the class attributes
         via strings. Obviously we don't really need to store the information
         twice per card. It would probably be better to replace all class 
-        attributes with key value pairs, but this works for now.
+        attributes we want to access this way with key value pairs, but this 
+        works for now.
         """
         self["Name"] = self.name
         self["Id"] = self.id
@@ -472,10 +476,22 @@ class Card(dict):
 
         return "0" * (size - len(string)) + string
 
+    def get_image(self):
+        try:
+            return self.image
+
+        except AttributeError:
+            self.image = self.renderer.render_card(self)
+            return self.image
+    
+    def save_card_image(self):
+        self.get_image()
+        self.renderer.save_card(self)
+
 class Renderer:
-    def __init__(self):
-        self.src_dir_path = "../decompile"
-        self.dest_dir_path = "rendered"
+    def __init__(self, src_dir_path = "../decompile", dest_dir_path = "rendered"):
+        self.src_dir_path = src_dir_path
+        self.dest_dir_path = dest_dir_path
 
         self.card_width = 400
         self.card_height = 580
@@ -509,7 +525,7 @@ class Renderer:
         self.attribute_icon_water_coordinates = (1425, 43, 1466, 84)
         self.attribute_icon_coordinate = (329, 27, 370, 68)
 
-        self.art_dir_path = "cardcropHD400.jpg.zib"
+        self.art_dir_paths = ("cardcropHD400.jpg.zib", "cardcropHD401.jpg.zib")
 
         self.name_font_path = "font\\MatrixRegularSmallCaps.otf"
         self.name_font_size = 36
@@ -523,12 +539,19 @@ class Renderer:
                             self.choose_frame_path(card.major_type)))
 
         attribute_icon = self.load_attribute_icon(card)
-        art_path = path.join(
-                            self.src_dir_path, 
-                            self.art_dir_path, 
-                            card.id + ".jpg")
 
-        art = Image.open(art_path)
+        try:
+            art = Image.open(path.join(
+                                self.src_dir_path, 
+                                self.art_dir_paths[0], 
+                                card.id + ".jpg"))
+            
+        except FileNotFoundError:
+            art = Image.open(path.join(
+                                self.src_dir_path, 
+                                self.art_dir_paths[1], 
+                                card.id + ".jpg"))
+
         canvas.paste(art, (49, 107))
         canvas.paste(frame, (0, 0), frame)
         
@@ -558,7 +581,10 @@ class Renderer:
                     anchor = "ls"),
                 outline = (255, 0, 0))
 
-        canvas.save(
+        return canvas
+
+    def save_card(self, card):
+        card.image.save(
                     path.join(self.dest_dir_path, card.name + ".png"),
                     "PNG")
 
