@@ -7,7 +7,7 @@ from PIL import ImageTk, Image, ImageDraw, ImageFont
 from os import path
 
 class Application(tk.Frame):
-    def __init__(self, root= None):
+    def __init__(self, root = None):
         super().__init__(root)
         self.root = root
         self.root.title("Card Viewer")
@@ -32,54 +32,58 @@ class Application(tk.Frame):
         """
 
     def build_card_canvas(self):
+        """
         self.card_canvas = tk.Canvas(self)
         self.card_canvas.grid(row = 0, column = 0)
+        """
+
+        self.cardviewer_data = CardviewerData(self)
         
-        self.card_name_label = tk.Label(self.card_canvas)
+        self.card_name_label = tk.Label(self.cardviewer_data)
         self.card_name_label.grid(row = 0, column = 0)
         self.card_name_label.config(text = "Name")
         self.card_name_entry_var = tk.StringVar()
-        self.card_name_entry = tk.Entry(self.card_canvas)
+        self.card_name_entry = tk.Entry(self.cardviewer_data)
         self.card_name_entry.grid(row = 0, column = 1)
         self.card_name_entry.config(textvariable = self.card_name_entry_var)
 
-        self.card_id_label = tk.Label(self.card_canvas)
+        self.card_id_label = tk.Label(self.cardviewer_data)
         self.card_id_label.grid(row = 1, column = 0)
         self.card_id_label.config(text = "Id")
         self.card_id_entry_var = tk.StringVar()
-        self.card_id_entry = tk.Entry(self.card_canvas)
+        self.card_id_entry = tk.Entry(self.cardviewer_data)
         self.card_id_entry.grid(row = 1, column = 1)
         self.card_id_entry.config(textvariable = self.card_id_entry_var)
 
-        self.card_attribute_label = tk.Label(self.card_canvas)
+        self.card_attribute_label = tk.Label(self.cardviewer_data)
         self.card_attribute_label.grid(row = 2, column = 0)
         self.card_attribute_label.config(text = "Attribute")
         self.card_attribute_entry_var = tk.StringVar()
-        self.card_attribute_entry = tk.Entry(self.card_canvas)
+        self.card_attribute_entry = tk.Entry(self.cardviewer_data)
         self.card_attribute_entry.grid(row = 2, column = 1)
         self.card_attribute_entry.config(textvariable = self.card_attribute_entry_var)
 
-        self.card_major_type_label = tk.Label(self.card_canvas)
+        self.card_major_type_label = tk.Label(self.cardviewer_data)
         self.card_major_type_label.grid(row = 3, column = 0)
         self.card_major_type_label.config(text = "Major Type")
         self.card_major_type_entry_var = tk.StringVar()
-        self.card_major_type_entry = tk.Entry(self.card_canvas)
+        self.card_major_type_entry = tk.Entry(self.cardviewer_data)
         self.card_major_type_entry.grid(row = 3, column = 1)
         self.card_major_type_entry.config(textvariable = self.card_major_type_entry_var)
 
-        self.card_minor_type_label = tk.Label(self.card_canvas)
+        self.card_minor_type_label = tk.Label(self.cardviewer_data)
         self.card_minor_type_label.grid(row = 4, column = 0)
         self.card_minor_type_label.config(text = "Minor Type")
         self.card_minor_type_entry_var = tk.StringVar()
-        self.card_minor_type_entry = tk.Entry(self.card_canvas)
+        self.card_minor_type_entry = tk.Entry(self.cardviewer_data)
         self.card_minor_type_entry.grid(row = 4, column = 1)
         self.card_minor_type_entry.config(textvariable = self.card_minor_type_entry_var)
 
-        self.card_level_label = tk.Label(self.card_canvas)
+        self.card_level_label = tk.Label(self.cardviewer_data)
         self.card_level_label.grid(row = 5, column = 0)
         self.card_level_label.config(text = "Level")
         self.card_level_entry_var = tk.StringVar()
-        self.card_level_entry = tk.Entry(self.card_canvas)
+        self.card_level_entry = tk.Entry(self.cardviewer_data)
         self.card_level_entry.grid(row = 5, column = 1)
         self.card_level_entry.config(textvariable = self.card_level_entry_var)
 
@@ -131,6 +135,11 @@ class Application(tk.Frame):
             self.card_treeview.insert("", "end", values = (card.name, card.id), iid = str(card.id))
 
         self.card_canvas_update(self.cards[0])
+
+class CardviewerData(tk.Canvas):
+    def __init__(self, root = None):
+        super().__init__(root)
+        self.grid(row = 0, column = 0)
 
 class File:
     def __init__(self, path):
