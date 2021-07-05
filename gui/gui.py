@@ -26,14 +26,19 @@ class Application(tk.Frame):
         self.toolbar_menu.add_cascade(label = "File", menu = self.file_menu)
         self.root.config(menu = self.toolbar_menu)
         
-        """
-        self.card_image = ImageTk.PhotoImage(Image.open("reference.png"))
-        self.card_image_label = tk.Label(self, image = self.card_image)
-        self.card_image_label.grid(row = 1, column = 1)
-        """
-
     def build_card_canvas(self):
-        self.cardviewer_data = CardviewerData(self)
+        self.cardviewer_canvas = tk.Canvas(self)
+        self.cardviewer_canvas.grid(row = 0, column = 0)
+
+        self.cardviewer_image_canvas = tk.Canvas(self.cardviewer_canvas)
+        self.cardviewer_image_canvas.grid(row = 0, column = 0)
+        print(self.cardviewer_image_canvas.grid_size())
+        self.cardviewer_image = ImageTk.PhotoImage(Image.open("reference.png"))
+        self.cardviewer_image_label = tk.Label(self, image = self.cardviewer_image)
+        self.cardviewer_image_label.grid(row = 0, column = 0, sticky = "w")
+
+        self.cardviewer_data = CardviewerData(self.cardviewer_canvas)
+        self.cardviewer_data.grid(row = 0, column = 1)
         self.cardviewer_data.add_row("Name")
         self.cardviewer_data.add_row("Id")
         self.cardviewer_data.add_row("Attribute")
@@ -89,7 +94,9 @@ class Application(tk.Frame):
 class CardviewerData(tk.Canvas):
     def __init__(self, root = None):
         super().__init__(root)
-        self.grid(row = 0, column = 0)
+        """
+        self.grid(row = 0, column = 1)
+        """
         self.rows = {}
         self.row_counter = 0
     
