@@ -558,8 +558,9 @@ class Renderer:
 
         self.text_fill = (0, 0, 0)
 
-    def render_card(self, card):
+    def render_card(self, card, testing = False):
         canvas = Image.new("RGB", self.card_size)
+
         try:
             frame_path = path.join(
                                 self.src_dir_path,
@@ -603,20 +604,29 @@ class Renderer:
                     size = self.name_font_size)
 
         draw = ImageDraw.Draw(canvas)
-        draw.text(
-                (36, 57), 
-                card.name, 
-                font = name_font, 
-                fill = (0, 255, 0),
-                anchor = "ls")
-
-        draw.rectangle(
-                draw.textbbox(
+        if testing:
+            draw.text(
                     (36, 57), 
                     card.name, 
-                    font = name_font,
-                    anchor = "ls"),
-                outline = (255, 0, 0))
+                    font = name_font, 
+                    fill = (0, 255, 0),
+                    anchor = "ls")
+
+            draw.rectangle(
+                    draw.textbbox(
+                        (36, 57), 
+                        card.name, 
+                        font = name_font,
+                        anchor = "ls"),
+                    outline = (255, 0, 0))
+
+        else:
+            draw.text(
+                    (36, 57), 
+                    card.name, 
+                    font = name_font, 
+                    fill = (0, 0, 0),
+                    anchor = "ls")
 
         return canvas
 
