@@ -484,7 +484,7 @@ class Card(dict):
         return int(self.properties_string[41 : 45], base = 2)
 
     def summarise(self):
-        print(f"Name:\t\t{self.name}")
+        print(f"-----------------------------\n-- {self.name}")
         print(f"Attribute:\t{self.attribute}")
         print(f"Major Type:\t{self.major_type}")
 
@@ -510,7 +510,6 @@ class Card(dict):
             self.imagetk = ImageTk.PhotoImage(self.get_image())
             return self.imagetk
 
-    
     def save_card_image(self):
         self.get_image()
         self.renderer.save_card(self)
@@ -547,7 +546,7 @@ class Renderer:
         self.attribute_icon_trap_coordinates = (1425, 1, 1466, 42)
         self.attribute_icon_wind_coordinates = (1467, 1, 1508, 42)
         self.attribute_icon_earth_coordinates = (1299, 43, 1340, 84)
-        self.attribute_icon_divine_coordinates = (13443, 43, 1382, 84)
+        self.attribute_icon_divine_coordinates = (1341, 43, 1382, 84)
         self.attribute_icon_spell_coordinates = (1383, 43, 1424, 84)
         self.attribute_icon_water_coordinates = (1425, 43, 1466, 84)
         self.attribute_icon_coordinate = (329, 27, 370, 68)
@@ -569,7 +568,6 @@ class Renderer:
             frame = Image.open(frame_path)
 
         except TypeError:
-            print(card.major_type)
             pass
 
         attribute_icon = self.load_attribute_icon(card)
@@ -587,6 +585,7 @@ class Renderer:
                                 card.id + ".jpg"))
 
         canvas.paste(art, (49, 107))
+
         try:
             canvas.paste(frame, (0, 0), frame)
 
@@ -636,6 +635,9 @@ class Renderer:
         if ("XYZ" in major_type) and ("Pendulum" in major_type):
             return self.frame_XYZ_pendulum_path
 
+        if ("Effect" in major_type) or ("Toon" in major_type):
+            return self.frame_effect_path
+
         if "Pendulum" in major_type:
             return self.frame_pendulum_normal_path
 
@@ -644,9 +646,6 @@ class Renderer:
 
         if "Ritual" in major_type:
             return self.frame_ritual_path
-        
-        if "Effect" in major_type:
-            return self.frame_effect_path
         
         if "Spell" in major_type:
             return self.frame_spell_path
@@ -707,6 +706,8 @@ class Renderer:
         if "Trap" in card.attribute:
             with Image.open(extras_path) as image:
                 return image.crop(self.attribute_icon_trap_coordinates)
+
+        card.summarise()
 
 def main():
     root = tk.Tk()
