@@ -551,6 +551,13 @@ class Renderer:
         self.attribute_icon_water_coordinates = (1425, 43, 1466, 84)
         self.attribute_icon_coordinate = (329, 27, 370, 68)
 
+        self.star_icon_coordinates = (2193, 286, 2220, 313)
+        self.star_line_width = 336
+        self.star_line_height = 28
+        self.star_icon_width = 28
+        self.star_icon_height = 28
+
+
         self.art_dir_paths = ("cardcropHD400.jpg.zib", "cardcropHD401.jpg.zib")
 
         self.name_font_path = "font\\MatrixRegularSmallCaps.otf"
@@ -627,6 +634,11 @@ class Renderer:
                     font = name_font, 
                     fill = (0, 0, 0),
                     anchor = "ls")
+
+        level_line = self.render_star_line(card)
+
+        if level_line != None:
+            canvas.paste(level_line, (23, 71), level_line)
 
         return canvas
 
@@ -718,7 +730,48 @@ class Renderer:
                 return image.crop(self.attribute_icon_trap_coordinates)
 
         card.summarise()
+    
+    def render_star_line(self, card):
+        if "Monster" in card.major_type:
+            return self.render_level_line(card)
 
+        return None
+
+        if "Spell" in card.major_type:
+            return self.render_spell_line(self.card)
+
+        if "Trap" in self.major_type:
+            return self.render_trap_line(self.card)
+
+    def render_level_line(self, card):
+        if card.level == 0:
+            return None
+
+        extras_path = path.join(self.src_dir_path, self.extras_path)
+        self.level_line_canvas = Image.new(
+                "RGBa", 
+                (self.star_line_width,
+                self.star_line_height))
+
+        with Image.open(extras_path) as image:
+            level_icon = image.crop(self.star_icon_coordinates)
+
+            for level in range(card.level):
+                self.level_line_canvas.paste(
+                        level_icon,
+                        ((self.star_line_width - ((level + 1) * self.star_icon_width),
+                        0)),
+                        level_icon)
+
+                """
+                self.level_line_canvas.paste(
+                        level_icon,
+                        ((level * self.star_icon_width), 0),
+                        level_icon)
+                """
+
+        return self.level_line_canvas
+        
 def main():
     root = tk.Tk()
     application = Application(root = root)
