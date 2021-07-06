@@ -554,6 +554,7 @@ class Renderer:
         self.attribute_icon_coordinate = (329, 27, 370, 68)
 
         self.star_icon_coordinates = (2193, 286, 2220, 313)
+        self.rank_icon_coordinates = (2209, 316, 2237, 344)
         self.star_line_width = 336
         self.star_line_height = 28
         self.star_icon_width = 28
@@ -662,9 +663,6 @@ class Renderer:
         if "Fusion" in major_type:
             return self.frame_fusion_path
 
-        if ("Effect" in major_type) or ("Toon" in major_type):
-            return self.frame_effect_path
-
         if "Pendulum" in major_type:
             return self.frame_pendulum_normal_path
 
@@ -673,18 +671,21 @@ class Renderer:
 
         if "Ritual" in major_type:
             return self.frame_ritual_path
-        
-        if "Spell" in major_type:
-            return self.frame_spell_path
-        
-        if "Normal" in major_type:
-            return self.frame_normal_path
 
         if "Synchro" in major_type:
             return self.frame_synchro_path
 
         if "Token" in major_type:
             return self.frame_token_path
+        
+        if ("Effect" in major_type) or ("Toon" in major_type):
+            return self.frame_effect_path
+
+        if "Spell" in major_type:
+            return self.frame_spell_path
+        
+        if "Normal" in major_type:
+            return self.frame_normal_path
 
         if "Trap" in major_type:
             return self.frame_trap_path
@@ -756,21 +757,24 @@ class Renderer:
                 self.star_line_height))
 
         with Image.open(extras_path) as image:
-            level_icon = image.crop(self.star_icon_coordinates)
+            if "XYZ" in card.major_type:
+                rank_icon = image.crop(self.rank_icon_coordinates)
 
-            for level in range(card.level):
-                self.level_line_canvas.paste(
-                        level_icon,
-                        ((self.star_line_width - ((level + 1) * self.star_icon_width),
-                        0)),
-                        level_icon)
+                for level in range(card.level):
+                    self.level_line_canvas.paste(
+                            rank_icon,
+                            ((level * self.star_icon_width), 0),
+                            rank_icon)
 
-                """
-                self.level_line_canvas.paste(
-                        level_icon,
-                        ((level * self.star_icon_width), 0),
-                        level_icon)
-                """
+            else:
+                level_icon = image.crop(self.star_icon_coordinates)
+
+                for level in range(card.level):
+                    self.level_line_canvas.paste(
+                            level_icon,
+                            ((self.star_line_width - ((level + 1) * self.star_icon_width),
+                            0)),
+                            level_icon)
 
         return self.level_line_canvas
         
