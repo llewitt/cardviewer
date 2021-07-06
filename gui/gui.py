@@ -30,11 +30,20 @@ class Application(tk.Frame):
         self.cardviewer_canvas = tk.Canvas(self)
         self.cardviewer_canvas.grid(row = 0, column = 0)
 
+        """
         self.cardviewer_image_canvas = tk.Canvas(self.cardviewer_canvas)
         self.cardviewer_image_canvas.grid(row = 0, column = 0)
-        print(self.cardviewer_image_canvas.grid_size())
+        """
+
+        self.cardviewer_image_frame = tk.Frame(self.cardviewer_canvas, height = 580, width = 400)
+        self.cardviewer_image_frame.grid(row = 0, column = 0)
+        
+        """
         self.cardviewer_image = ImageTk.PhotoImage(Image.open("reference.png"))
-        self.cardviewer_image_label = tk.Label(self, image = self.cardviewer_image)
+        self.cardviewer_image_label = tk.Label(self.cardviewer_canvas, image = self.cardviewer_image)
+        """
+       
+        self.cardviewer_image_label = tk.Label(self.cardviewer_image_frame)
         self.cardviewer_image_label.grid(row = 0, column = 0, sticky = "w")
 
         self.cardviewer_data = CardviewerData(self.cardviewer_canvas)
@@ -80,6 +89,8 @@ class Application(tk.Frame):
         self.open(src_dir_path)
 
     def card_canvas_update(self, card):
+        self.cardviewer_image_label.config(image = card.get_imagetk())
+
         for key, value in card.items():
             self.cardviewer_data.rows[key].entry_var.set(value)
 
@@ -490,6 +501,15 @@ class Card(dict):
         except AttributeError:
             self.image = self.renderer.render_card(self)
             return self.image
+
+    def get_imagetk(self):
+        try:
+            return self.imagetk
+
+        except AttributeError:
+            self.imagetk = ImageTk.PhotoImage(self.get_image())
+            return self.imagetk
+
     
     def save_card_image(self):
         self.get_image()
@@ -541,9 +561,16 @@ class Renderer:
 
     def render_card(self, card):
         canvas = Image.new("RGB", self.card_size)
-        frame = Image.open(path.join(
-                            self.src_dir_path,
-                            self.choose_frame_path(card.major_type)))
+        try:
+            frame_path = path.join(
+                                self.src_dir_path,
+                                self.choose_frame_path(card.major_type))
+
+            frame = Image.open(frame_path)
+
+        except TypeError:
+            print(card.major_type)
+            pass
 
         attribute_icon = self.load_attribute_icon(card)
 
@@ -560,7 +587,11 @@ class Renderer:
                                 card.id + ".jpg"))
 
         canvas.paste(art, (49, 107))
-        canvas.paste(frame, (0, 0), frame)
+        try:
+            canvas.paste(frame, (0, 0), frame)
+
+        except NameError:
+            pass
         
         if attribute_icon != None:
             canvas.paste(
@@ -620,6 +651,9 @@ class Renderer:
         if "Spell" in major_type:
             return self.frame_spell_path
         
+        if "Normal" in major_type:
+            return self.frame_normal_path
+
         if "Synchro" in major_type:
             return self.frame_synchro_path
 
