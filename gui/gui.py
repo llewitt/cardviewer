@@ -487,6 +487,8 @@ class Card(dict):
         print(f"-----------------------------\n-- {self.name}")
         print(f"Attribute:\t{self.attribute}")
         print(f"Major Type:\t{self.major_type}")
+        print(f"Minor Type:\t{self.minor_type}")
+        print(f"Level:\t\t{self.level}")
 
     def pad_binary_string(self, string, size):
         if len(string) == size:
@@ -657,6 +659,9 @@ class Renderer:
         if ("XYZ" in major_type) and ("Pendulum" in major_type):
             return self.frame_XYZ_pendulum_path
 
+        if "Fusion" in major_type:
+            return self.frame_fusion_path
+
         if ("Effect" in major_type) or ("Toon" in major_type):
             return self.frame_effect_path
 
@@ -683,9 +688,6 @@ class Renderer:
 
         if "Trap" in major_type:
             return self.frame_trap_path
-
-        if "Fusion" in major_type:
-            return self.frame_fusion_path
 
     def load_attribute_icon(self, card):
         extras_path = path.join(self.src_dir_path, self.extras_path)
