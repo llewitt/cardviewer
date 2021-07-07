@@ -475,9 +475,9 @@ class Card(dict):
             return "Normal Trap"
 
         if type_code == 0x02:
-            return "Continous Spell"
+            return "Continous Trap"
 
-        if type_code == 0x06:
+        if type_code == 0x04:
             return "Counter Trap"
 
     def decode_level(self):
@@ -553,19 +553,32 @@ class Renderer:
         self.attribute_icon_water_coordinates = (1425, 43, 1466, 84)
         self.attribute_icon_coordinate = (329, 27, 370, 68)
 
-        self.star_icon_coordinates = (2193, 286, 2220, 313)
+        self.level_icon_coordinates = (2193, 286, 2220, 313)
         self.rank_icon_coordinates = (2209, 316, 2237, 344)
+        self.level_line_coordinates = (23, 71)
         self.level_line_width = 336
         self.level_line_height = 28
-        self.star_icon_width = 28
-        self.star_icon_height = 28
+        self.level_icon_width = 28
+        self.level_icon_height = 28
+
+        self.spell_trap_icon_coordinates = (310, 5)
+        self.quick_play_icon_coordinates = (2297, 346, 2316, 365)
+        self.ritual_icon_coordinates = (2290, 407, 2309, 426)
+        self.field_icon_coordinates = (2268, 407, 2287, 426)
+        self.continous_icon_coordinates = (2329, 221, 2348, 240)
+        self.equip_icon_coordinates = (2324, 66, 2343, 85)
+        self.counter_icon_coordinates = (2324, 128, 2343, 147)
 
         self.art_dir_paths = ("cardcropHD400.jpg.zib", "cardcropHD401.jpg.zib")
 
         self.name_font_path = "font\\MatrixRegularSmallCaps.otf"
         self.name_font_size = 36
-
-        self.text_fill = (0, 0, 0)
+        
+        self.black = (0, 0, 0)
+        self.white = (255, 255, 255)
+        self.red = (255, 0, 0)
+        self.green = (0, 255, 0)
+        self.blue = (0, 0, 255)
 
     def render_card(self, card, testing = False):
         canvas = Image.new("RGB", self.card_size)
@@ -609,11 +622,10 @@ class Renderer:
                     attribute_icon)
 
         self.render_name(canvas, card)
-
         level_line = self.render_star_line(card)
 
         if level_line != None:
-            canvas.paste(level_line, (23, 71), level_line)
+            canvas.paste(level_line, self.level_line_coordinates, level_line)
 
         return canvas
 
@@ -713,13 +725,8 @@ class Renderer:
         if "Monster" in card.major_type:
             return self.render_level_line(card)
 
-        return None
-
-        if "Spell" in card.major_type:
-            return self.render_spell_line(self.card)
-
-        if "Trap" in self.major_type:
-            return self.render_trap_line(self.card)
+        if ("Spell" in card.major_type) or ("Trap" in card.major_type):
+            return self.render_spell_trap_line(card)
 
     def render_level_line(self, card):
         try:
@@ -734,14 +741,14 @@ class Renderer:
                     self.level_line_height))
 
             with Image.open(extras_path) as image:
-                level_icon = image.crop(self.star_icon_coordinates)
+                level_icon = image.crop(self.level_icon_coordinates)
 
             self.level_line_images.append(level_line_canvas.copy())
 
             for level in range(12):
                 level_line_canvas.paste(
                         level_icon,
-                        ((self.level_line_width - ((level + 1) * self.star_icon_width),
+                        ((self.level_line_width - ((level + 1) * self.level_icon_width),
                         0)),
                         level_icon)
 
@@ -769,12 +776,82 @@ class Renderer:
             for rank in range(card.level):
                 rank_line_canvas.paste(
                         rank_icon,
-                        ((rank * self.star_icon_width), 0),
+                        ((rank * self.level_icon_width), 0),
                         rank_icon)
 
                 self.rank_line_images.append(rank_line_canvas.copy())
 
             return self.rank_line_images[card.level]
+
+    def render_spell_trap_line(self, card):
+        try:
+            try:
+                return self.spell_trap_line_images[card.minor_type]
+        
+            except AttributeError:
+                self.spell_trap_line_images = {}
+
+            return self.spell_trap_line_images[card.minor_type]
+
+        except KeyError:
+            extras_path = path.join(self.src_dir_path, self.extras_path)
+            spell_trap_line_canvas = Image.new(
+                    "RGBa", 
+                    (self.level_line_width,
+                    self.level_line_height))
+
+            if "Normal" in card.minor_type:
+                return self.spell_trap_line_images[card.minor_type]
+
+            if "Quick-Play" in card.minor_type:
+                with Image.open(extras_path) as image:
+                    icon = image.crop(self.quick_play_icon_coordinates)
+
+            elif "Ritual" in card.minor_type:
+                with Image.open(extras_path) as image:
+                    icon = image.crop(self.ritual_icon_coordinates)
+
+            elif "Field" in card.minor_type:
+                with image.open(extras_path) as image:
+                    icon = image.crop(self.field_icon_coordinates)
+
+            elif "Continous" in card.minor_type:
+                with Image.open(extras_path) as image:
+                    icon = image.crop(self.continous_icon_coordinates)
+
+            elif "Equip" in card.minor_type:
+                with Image.open(extras_path) as image:
+                    icon = image.crop(self.equip_icon_coordinates)
+
+            elif "Counter" in card.minor_type:
+                with Image.open(extras_path) as image:
+                    icon = image.crop(self.counter_icon_coordinates)
+
+            else:
+                return self.spell_trap_line_images[card.minor_type]
+
+            spell_trap_line_canvas.paste(
+                        icon,
+                        self.spell_trap_icon_coordinates,
+                        icon)
+            
+
+            """
+            with Image.open(extras_path) as image:
+                rank_icon = image.crop(self.rank_icon_coordinates)
+
+            
+
+            spell_trap_line_canvas.paste(
+                        rank_icon,
+                        (self.level_icon_width, 0),
+                        rank_icon)
+            """
+
+            self.spell_trap_line_images[card.minor_type] = \
+                    spell_trap_line_canvas.copy()
+
+            return self.spell_trap_line_images[card.minor_type]
 
     def render_name(self, canvas, card, testing = False):
         name_font = ImageFont.truetype(
@@ -812,13 +889,28 @@ class Renderer:
                     fill = fill,
                     anchor = "ls")
 
-def test():
+def test(name = "Major Type", value = "XYZ"):
     cards = Cards()
 
+    type_list = []
     for card in cards:
-        if "XYZ" in card.major_type:
-            card.get_image().show()
-            break
+
+        if card.minor_type not in type_list:
+
+            print(type_list)
+            type_list.append(card.minor_type)
+
+        if type(card[name]) == str:
+            if value in card[name]:
+                card.get_image().show()
+                return
+
+        else:
+            if card[name] == value:
+                card.get_image().show()
+                return
+
+    print(f"Error: Could not find card with {name} compatible with {value}")
 
 def main():
     root = tk.Tk()
