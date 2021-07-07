@@ -85,7 +85,7 @@ class Application(tk.Frame):
             return
 
     def show_open_filedialog(self):
-        src_dir_path = filedialog.askdirectory()
+        src_dir_path = filedialog.askdirectory(initialdir = "../decompile")
         self.open(src_dir_path)
 
     def card_canvas_update(self, card):
@@ -735,6 +735,9 @@ class Renderer:
         card.summarise()
     
     def render_star_line(self, card):
+        if "XYZ" in card.major_type:
+            return self.render_rank_line(card)
+
         if "Monster" in card.major_type:
             return self.render_level_line(card)
 
@@ -747,37 +750,60 @@ class Renderer:
             return self.render_trap_line(self.card)
 
     def render_level_line(self, card):
-        if card.level == 0:
-            return None
+        try:
+            return self.level_line_images[card.level]
 
-        extras_path = path.join(self.src_dir_path, self.extras_path)
-        self.level_line_canvas = Image.new(
-                "RGBa", 
-                (self.star_line_width,
-                self.star_line_height))
+        except AttributeError:
+            self.level_line_images = []
+            extras_path = path.join(self.src_dir_path, self.extras_path)
+            level_line_canvas = Image.new(
+                    "RGBa", 
+                    (self.star_line_width,
+                    self.star_line_height))
 
-        with Image.open(extras_path) as image:
-            if "XYZ" in card.major_type:
-                rank_icon = image.crop(self.rank_icon_coordinates)
-
-                for level in range(card.level):
-                    self.level_line_canvas.paste(
-                            rank_icon,
-                            ((level * self.star_icon_width), 0),
-                            rank_icon)
-
-            else:
+            with Image.open(extras_path) as image:
                 level_icon = image.crop(self.star_icon_coordinates)
 
-                for level in range(card.level):
-                    self.level_line_canvas.paste(
-                            level_icon,
-                            ((self.star_line_width - ((level + 1) * self.star_icon_width),
-                            0)),
-                            level_icon)
+            self.level_line_images.append(level_line_canvas.copy())
 
-        return self.level_line_canvas
-        
+            for level in range(12):
+                level_line_canvas.paste(
+                        level_icon,
+                        ((self.star_line_width - ((level + 1) * self.star_icon_width),
+                        0)),
+                        level_icon)
+
+                self.level_line_images.append(level_line_canvas.copy())
+
+            return self.level_line_images[card.level]
+
+    def render_rank_line(self, card):
+        try:
+            return self.rank_line_images[card.level]
+
+        except AttributeError:
+            self.rank_line_images = []
+            extras_path = path.join(self.src_dir_path, self.extras_path)
+            rank_line_canvas = Image.new(
+                    "RGBa", 
+                    (self.star_line_width,
+                    self.star_line_height))
+
+            with Image.open(extras_path) as image:
+                rank_icon = image.crop(self.rank_icon_coordinates)
+
+            self.rank_line_images.append(rank_line_canvas.copy())
+
+            for rank in range(card.level):
+                rank_line_canvas.paste(
+                        rank_icon,
+                        ((rank * self.star_icon_width), 0),
+                        rank_icon)
+
+                self.rank_line_images.append(rank_line_canvas.copy())
+
+            return self.rank_line_images[card.level]
+
 def main():
     root = tk.Tk()
     application = Application(root = root)
