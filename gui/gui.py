@@ -555,11 +555,10 @@ class Renderer:
 
         self.star_icon_coordinates = (2193, 286, 2220, 313)
         self.rank_icon_coordinates = (2209, 316, 2237, 344)
-        self.star_line_width = 336
-        self.star_line_height = 28
+        self.level_line_width = 336
+        self.level_line_height = 28
         self.star_icon_width = 28
         self.star_icon_height = 28
-
 
         self.art_dir_paths = ("cardcropHD400.jpg.zib", "cardcropHD401.jpg.zib")
 
@@ -609,34 +608,7 @@ class Renderer:
                     self.attribute_icon_coordinate, 
                     attribute_icon)
 
-        name_font = ImageFont.truetype(
-                    path.join(self.src_dir_path, self.name_font_path),
-                    size = self.name_font_size)
-
-        draw = ImageDraw.Draw(canvas)
-        if testing:
-            draw.text(
-                    (36, 57), 
-                    card.name, 
-                    font = name_font, 
-                    fill = (0, 255, 0),
-                    anchor = "ls")
-
-            draw.rectangle(
-                    draw.textbbox(
-                        (36, 57), 
-                        card.name, 
-                        font = name_font,
-                        anchor = "ls"),
-                    outline = (255, 0, 0))
-
-        else:
-            draw.text(
-                    (36, 57), 
-                    card.name, 
-                    font = name_font, 
-                    fill = (0, 0, 0),
-                    anchor = "ls")
+        self.render_name(canvas, card)
 
         level_line = self.render_star_line(card)
 
@@ -758,8 +730,8 @@ class Renderer:
             extras_path = path.join(self.src_dir_path, self.extras_path)
             level_line_canvas = Image.new(
                     "RGBa", 
-                    (self.star_line_width,
-                    self.star_line_height))
+                    (self.level_line_width,
+                    self.level_line_height))
 
             with Image.open(extras_path) as image:
                 level_icon = image.crop(self.star_icon_coordinates)
@@ -769,7 +741,7 @@ class Renderer:
             for level in range(12):
                 level_line_canvas.paste(
                         level_icon,
-                        ((self.star_line_width - ((level + 1) * self.star_icon_width),
+                        ((self.level_line_width - ((level + 1) * self.star_icon_width),
                         0)),
                         level_icon)
 
@@ -786,8 +758,8 @@ class Renderer:
             extras_path = path.join(self.src_dir_path, self.extras_path)
             rank_line_canvas = Image.new(
                     "RGBa", 
-                    (self.star_line_width,
-                    self.star_line_height))
+                    (self.level_line_width,
+                    self.level_line_height))
 
             with Image.open(extras_path) as image:
                 rank_icon = image.crop(self.rank_icon_coordinates)
@@ -803,6 +775,50 @@ class Renderer:
                 self.rank_line_images.append(rank_line_canvas.copy())
 
             return self.rank_line_images[card.level]
+
+    def render_name(self, canvas, card, testing = False):
+        name_font = ImageFont.truetype(
+                    path.join(self.src_dir_path, self.name_font_path),
+                    size = self.name_font_size)
+
+        draw = ImageDraw.Draw(canvas)
+        if testing:
+            draw.text(
+                    (36, 57), 
+                    card.name, 
+                    font = name_font, 
+                    fill = (0, 255, 0),
+                    anchor = "ls")
+
+            draw.rectangle(
+                    draw.textbbox(
+                        (36, 57), 
+                        card.name, 
+                        font = name_font,
+                        anchor = "ls"),
+                    outline = (255, 0, 0))
+
+        else:
+            if "XYZ" in card.major_type:
+                fill = (255, 255, 255)
+
+            else:
+                fill = (0, 0, 0)
+
+            draw.text(
+                    (36, 57), 
+                    card.name, 
+                    font = name_font, 
+                    fill = fill,
+                    anchor = "ls")
+
+def test():
+    cards = Cards()
+
+    for card in cards:
+        if "XYZ" in card.major_type:
+            card.get_image().show()
+            break
 
 def main():
     root = tk.Tk()
